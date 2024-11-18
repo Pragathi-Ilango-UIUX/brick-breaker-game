@@ -27,9 +27,6 @@
     let paddleWidth = 100, paddleHeight = 10, paddleX = (canvas.width - paddleWidth) / 2;
     let ballRadius = 10, x = canvas.width / 2, y = canvas.height - 30, dx = 2, dy = -2;
 
-    const bricks = [];
-    const rowCount = 3, colCount = 5, brickWidth = 75, brickHeight = 20, padding = 10, offsetTop = 30, offsetLeft = 30;
-
     for (let r = 0; r < rowCount; r++) {
       bricks[r] = [];
       for (let c = 0; c < colCount; c++) {
@@ -62,17 +59,39 @@
       ctx.closePath();
     }
 
-    function drawBricks() {
-      for (let r = 0; r < rowCount; r++) {
-        for (let c = 0; c < colCount; c++) {
-          if (bricks[r][c].status) {
-            const brickX = c * (brickWidth + padding) + offsetLeft;
-            const brickY = r * (brickHeight + padding) + offsetTop;
-            bricks[r][c].x = brickX;
-            bricks[r][c].y = brickY;
+    const brickPattern = [
+      "1110111", // Top row of "404"
+      "1010101", // Middle row of "404"
+      "1110111"  // Bottom row of "404"
+    ];
 
+    const bricks = [];
+    const brickWidth = 50, brickHeight = 20, padding = 10, offsetTop = 50, offsetLeft = (canvas.width - (brickWidth + padding) * brickPattern[0].length) / 2;
+
+    for (let r = 0; r < brickPattern.length; r++) {
+      bricks[r] = [];
+      for (let c = 0; c < brickPattern[r].length; c++) {
+        if (brickPattern[r][c] === "1") {
+          const x = c * (brickWidth + padding) + offsetLeft;
+          const y = r * (brickHeight + padding) + offsetTop;
+          bricks[r][c] = { x, y, status: 1 };
+        } else {
+          bricks[r][c] = { status: 0 }; // Empty space
+        }
+      }
+    }
+
+    // Render bricks
+    function drawBricks() {
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < bricks[r].length; c++) {
+          if (bricks[r][c].status === 1) {
+            const brick = bricks[r][c];
+            ctx.beginPath();
+            ctx.rect(brick.x, brick.y, brickWidth, brickHeight);
             ctx.fillStyle = "#0095DD";
-            ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
+            ctx.fill();
+            ctx.closePath();
           }
         }
       }
