@@ -8,15 +8,30 @@
     body {
       margin: 0;
       overflow: hidden;
+      font-family: Arial, sans-serif;
     }
     canvas {
       display: block;
       background: #222;
     }
+    #pauseButton {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #0095DD;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #pauseButton:hover {
+      background-color: #007bb5;
+    }
   </style>
 </head>
 <body>
   <canvas id="brickBreaker"></canvas>
+  <button id="pauseButton">Pause</button>
   <script>
     const canvas = document.getElementById("brickBreaker");
     const ctx = canvas.getContext("2d");
@@ -24,21 +39,26 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // Brick layout
+    const rowCount = 3;
+    const colCount = 7;
+    const brickPattern = [
+      "1110111", // Top row of "404"
+      "1010101", // Middle row of "404"
+      "1110111"  // Bottom row of "404"
+    ];
+
     let paddleWidth = 100, paddleHeight = 10, paddleX = (canvas.width - paddleWidth) / 2;
     let ballRadius = 10, x = canvas.width / 2, y = canvas.height - 30, dx = 2, dy = -2;
-
-    const bricks = [];
-    const rowCount = 3, colCount = 5, brickWidth = 75, brickHeight = 20, padding = 10, offsetTop = 30, offsetLeft = 30;
-
-    for (let r = 0; r < rowCount; r++) {
-      bricks[r] = [];
-      for (let c = 0; c < colCount; c++) {
-        bricks[r][c] = { x: 0, y: 0, status: 1 };
-      }
-    }
+    const brickWidth = 50, brickHeight = 20, padding = 10, offsetTop = 50, offsetLeft = (canvas.width - (brickWidth + padding) * colCount) / 2;
+    let bricks = [];
+    let isPaused = false;
+    let gameOver = false;
+    let victory = false;
 
     const paddle = { rightPressed: false, leftPressed: false };
 
+    // Event listeners for paddle movement
     document.addEventListener("keydown", (e) => {
       if (e.key === "ArrowRight") paddle.rightPressed = true;
       else if (e.key === "ArrowLeft") paddle.leftPressed = true;
@@ -49,67 +69,120 @@
       else if (e.key === "ArrowLeft") paddle.leftPressed = false;
     });
 
+    // Initialize bricks based on pattern
+    for (let r = 0; r < rowCount; r++) {
+      bricks[r] = [];
+      for (let c = 0; c < colCount; c++) {
+        if (brickPattern[r][c] === "1") {
+          const x = c * (brickWidth + padding) + offsetLeft;
+          const y = r * (brickHeight + padding) + offsetTop;
+          bricks[r][c] = { x, y, status: 1 };
+        } else {
+          bricks[r][c] = { status: 0 }; // Empty space
+        }
+      }
+    }
+
+    // Draw paddle
     function drawPaddle() {
-      ctx.fillStyle = "#0095DD";
+      ctx.fillStyle = "white";
       ctx.fillRect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
     }
 
+    // Draw ball
     function drawBall() {
       ctx.beginPath();
       ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-      ctx.fillStyle = "#0095DD";
+      ctx.fillStyle = "white";
       ctx.fill();
       ctx.closePath();
     }
 
+    // Draw bricks
     function drawBricks() {
-      for (let r = 0; r < rowCount; r++) {
-        for (let c = 0; c < colCount; c++) {
-          if (bricks[r][c].status) {
-            const brickX = c * (brickWidth + padding) + offsetLeft;
-            const brickY = r * (brickHeight + padding) + offsetTop;
-            bricks[r][c].x = brickX;
-            bricks[r][c].y = brickY;
-
-            ctx.fillStyle = "#0095DD";
-            ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < bricks[r].length; c++) {
+          if (bricks[r][c].status === 1) {
+            const brick = bricks[r][c];
+            ctx.beginPath();
+            ctx.rect(brick.x, brick.y, brickWidth, brickHeight);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.closePath();
           }
         }
       }
     }
 
+    // Check for collisions
     function collisionDetection() {
       for (let r = 0; r < rowCount; r++) {
         for (let c = 0; c < colCount; c++) {
           const brick = bricks[r][c];
           if (brick.status && x > brick.x && x < brick.x + brickWidth && y > brick.y && y < brick.y + brickHeight) {
             dy = -dy;
-            brick.status = 0;
+            brick.status = 0; // Brick hit
           }
         }
       }
     }
 
+    // Draw game over or victory message
+    function drawMessage(message) {
+      ctx.font = "30px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText(message, canvas.width / 2 - ctx.measureText(message).width / 2, canvas.height / 2);
+    }
+
+    // Pause button functionality
+    document.getElementById('pauseButton').addEventListener('click', () => {
+      isPaused = !isPaused;
+      document.getElementById('pauseButton').textContent = isPaused ? "Resume" : "Pause";
+    });
+
+    // Game loop
     function draw() {
+      if (isPaused || gameOver || victory) return; // Pause or game over
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBricks();
       drawBall();
       drawPaddle();
       collisionDetection();
 
+      // Ball collision with walls
       if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
       if (y + dy < ballRadius) dy = -dy;
       else if (y + dy > canvas.height - ballRadius) {
         if (x > paddleX && x < paddleX + paddleWidth) dy = -dy;
         else {
-          alert("GAME OVER");
-          document.location.reload();
+          gameOver = true;
+          drawMessage("Oops! Try Again");
+          return;
         }
       }
 
+      // Victory condition
+      let allBricksCleared = true;
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < bricks[r].length; c++) {
+          if (bricks[r][c].status === 1) {
+            allBricksCleared = false;
+            break;
+          }
+        }
+      }
+      if (allBricksCleared) {
+        victory = true;
+        drawMessage("Woo hoo! You successfully beat the 404");
+        return;
+      }
+
+      // Update ball position
       x += dx;
       y += dy;
 
+      // Paddle movement
       if (paddle.rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
       if (paddle.leftPressed && paddleX > 0) paddleX -= 7;
 
