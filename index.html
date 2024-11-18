@@ -8,18 +8,40 @@
     body {
       margin: 0;
       overflow: hidden;
+      background: #222;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
     }
     canvas {
       display: block;
-      background: #222;
+      background: #333;
+    }
+    #pauseBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #0095DD;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <canvas id="brickBreaker"></canvas>
+  <button id="pauseBtn">Pause</button>
+  <div id="message" style="display:none; font-size: 30px; position: absolute;"></div>
+
   <script>
     const canvas = document.getElementById("brickBreaker");
     const ctx = canvas.getContext("2d");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const messageDiv = document.getElementById("message");
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -27,10 +49,25 @@
     let paddleWidth = 100, paddleHeight = 10, paddleX = (canvas.width - paddleWidth) / 2;
     let ballRadius = 10, x = canvas.width / 2, y = canvas.height - 30, dx = 2, dy = -2;
 
+    let rowCount = 3, colCount = 7;
+    const brickWidth = 50, brickHeight = 20, padding = 10, offsetTop = 50, offsetLeft = (canvas.width - (brickWidth + padding) * colCount) / 2;
+    const brickPattern = [
+      "1110111", // Top row of "404"
+      "1010101", // Middle row of "404"
+      "1110111"  // Bottom row of "404"
+    ];
+
+    let bricks = [];
     for (let r = 0; r < rowCount; r++) {
       bricks[r] = [];
       for (let c = 0; c < colCount; c++) {
-        bricks[r][c] = { x: 0, y: 0, status: 1 };
+        if (brickPattern[r][c] === "1") {
+          const brickX = c * (brickWidth + padding) + offsetLeft;
+          const brickY = r * (brickHeight + padding) + offsetTop;
+          bricks[r][c] = { x: brickX, y: brickY, status: 1 };
+        } else {
+          bricks[r][c] = { status: 0 };
+        }
       }
     }
 
@@ -46,50 +83,30 @@
       else if (e.key === "ArrowLeft") paddle.leftPressed = false;
     });
 
+    // Draw the paddle
     function drawPaddle() {
-      ctx.fillStyle = "#0095DD";
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
     }
 
+    // Draw the ball
     function drawBall() {
       ctx.beginPath();
       ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-      ctx.fillStyle = "#0095DD";
+      ctx.fillStyle = "#FFFFFF";
       ctx.fill();
       ctx.closePath();
     }
 
-    const brickPattern = [
-      "1110111", // Top row of "404"
-      "1010101", // Middle row of "404"
-      "1110111"  // Bottom row of "404"
-    ];
-
-    const bricks = [];
-    const brickWidth = 50, brickHeight = 20, padding = 10, offsetTop = 50, offsetLeft = (canvas.width - (brickWidth + padding) * brickPattern[0].length) / 2;
-
-    for (let r = 0; r < brickPattern.length; r++) {
-      bricks[r] = [];
-      for (let c = 0; c < brickPattern[r].length; c++) {
-        if (brickPattern[r][c] === "1") {
-          const x = c * (brickWidth + padding) + offsetLeft;
-          const y = r * (brickHeight + padding) + offsetTop;
-          bricks[r][c] = { x, y, status: 1 };
-        } else {
-          bricks[r][c] = { status: 0 }; // Empty space
-        }
-      }
-    }
-
-    // Render bricks
+    // Render the bricks
     function drawBricks() {
-      for (let r = 0; r < bricks.length; r++) {
-        for (let c = 0; c < bricks[r].length; c++) {
+      for (let r = 0; r < rowCount; r++) {
+        for (let c = 0; c < colCount; c++) {
           if (bricks[r][c].status === 1) {
             const brick = bricks[r][c];
             ctx.beginPath();
             ctx.rect(brick.x, brick.y, brickWidth, brickHeight);
-            ctx.fillStyle = "#0095DD";
+            ctx.fillStyle = "#FFFFFF";
             ctx.fill();
             ctx.closePath();
           }
@@ -97,6 +114,7 @@
       }
     }
 
+    // Collision detection with bricks
     function collisionDetection() {
       for (let r = 0; r < rowCount; r++) {
         for (let c = 0; c < colCount; c++) {
@@ -109,7 +127,23 @@
       }
     }
 
+    // Pause/resume functionality
+    let isPaused = false;
+    pauseBtn.addEventListener("click", () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? "Resume" : "Pause";
+    });
+
+    // Display message
+    function displayMessage(message) {
+      messageDiv.textContent = message;
+      messageDiv.style.display = "block";
+    }
+
+    // Draw the game elements
     function draw() {
+      if (isPaused) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBricks();
       drawBall();
@@ -121,8 +155,8 @@
       else if (y + dy > canvas.height - ballRadius) {
         if (x > paddleX && x < paddleX + paddleWidth) dy = -dy;
         else {
-          alert("GAME OVER");
-          document.location.reload();
+          displayMessage("Oops! Try again!");
+          return;
         }
       }
 
@@ -131,6 +165,22 @@
 
       if (paddle.rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
       if (paddle.leftPressed && paddleX > 0) paddleX -= 7;
+
+      // Check if all bricks are cleared
+      let allBricksCleared = true;
+      for (let r = 0; r < rowCount; r++) {
+        for (let c = 0; c < colCount; c++) {
+          if (bricks[r][c].status === 1) {
+            allBricksCleared = false;
+            break;
+          }
+        }
+      }
+
+      if (allBricksCleared) {
+        displayMessage("Woo hoo, you successfully beat the 404!");
+        return;
+      }
 
       requestAnimationFrame(draw);
     }
