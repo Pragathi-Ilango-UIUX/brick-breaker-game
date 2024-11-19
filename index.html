@@ -14,24 +14,10 @@
       display: block;
       background: #222;
     }
-    #pauseButton {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background-color: #0095DD;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #pauseButton:hover {
-      background-color: #007bb5;
-    }
   </style>
 </head>
 <body>
   <canvas id="brickBreaker"></canvas>
-  <button id="pauseButton">Pause</button>
   <script>
     const canvas = document.getElementById("brickBreaker");
     const ctx = canvas.getContext("2d");
@@ -43,21 +29,73 @@
     const offsetTop = 50;
     const offsetLeft = (canvas.width - (brickWidth + padding) * 7) / 2;
 
-    // Adjusted Brick Pattern
-    const brickPattern = [
-      "1111111", // Full row for the top of "404" (first 0)
-      "1000001", // Vertical line of "4" and first part of the diagonal
-      "1111111"  // Full row for the bottom of "404" (second 0)
-    ];
+    // Define the position for each brick (each brick has its own x, y coordinates)
+    const bricks = [
+      {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop, status: 1},  // Top vertical line of "4"
+            {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 30, status: 1},   // Vertical line of "4"
+                  {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 60, status: 1},   // Vertical line of "4"
+      {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 90, status: 1},   // Diagonal line of "4"
+           {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 120, status: 1},   // Diagonal line of "4"
+                {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 150, status: 1},   // Diagonal line of "4"
+                      {x: offsetLeft + 0 * (brickWidth + padding), y: offsetTop + 180, status: 1},   // Diagonal line of "4"
+                {x: offsetLeft + 1 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                   {x: offsetLeft - 1 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                           {x: offsetLeft - 2 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                                   {x: offsetLeft - 3 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                                      {x: offsetLeft - 2.7 * (brickWidth + padding), y: offsetTop + 90, status: 1},  // Diagonal line of "4"
+                                       {x: offsetLeft - 2.1 * (brickWidth + padding), y: offsetTop + 60, status: 1},  // Diagonal line of "4"
+                                        {x: offsetLeft - 1.7 * (brickWidth + padding), y: offsetTop + 30, status: 1},  // Diagonal line of "4"
+                                          {x: offsetLeft - 1.1 * (brickWidth + padding), y: offsetTop + 0, status: 1},  // Diagonal line of "4"
+                                          {x: offsetLeft - 0.3 * (brickWidth + padding), y: offsetTop - 30, status: 1},  // Diagonal line of "4"
+   
+     // "0"
+  ...Array.from({ length: 6 }, (_, i) => ({
+    x: offsetLeft + (brickWidth + padding) * 2,
+    y: offsetTop + i * (brickHeight + padding),
+    status: 1,
+  })), // Left vertical line
+  ...Array.from({ length: 6 }, (_, i) => ({
+    x: offsetLeft + (brickWidth + padding) * 5,
+    y: offsetTop + i * (brickHeight + padding),
+    status: 1,
+  })), // Right vertical line
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: offsetLeft + (brickWidth + padding) * (2 + i),
+    y: offsetTop,
+    status: 1,
+  })), // Top horizontal line
+  ...Array.from({ length: 4 }, (_, i) => ({
+    x: offsetLeft + (brickWidth + padding) * (2 + i),
+    y: offsetTop + 5 * (brickHeight + padding),
+    status: 1,
+  })), // Bottom horizontal line
+   
+      
+  {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop, status: 1},  // Top vertical line of "4"
+            {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 30, status: 1},   // Vertical line of "4"
+                  {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 60, status: 1},   // Vertical line of "4"
+      {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 90, status: 1},   // Diagonal line of "4"
+           {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 120, status: 1},   // Diagonal line of "4"
+                {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 150, status: 1},   // Diagonal line of "4"
+                      {x: offsetLeft + 10 * (brickWidth + padding), y: offsetTop + 180, status: 1},   // Diagonal line of "4"
+                {x: offsetLeft + 11 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                   {x: offsetLeft + 9 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                           {x: offsetLeft + 8 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                                   {x: offsetLeft + 7 * (brickWidth + padding), y: offsetTop + 120, status: 1},  // Diagonal line of "4"
+                                      {x: offsetLeft + 7.3 * (brickWidth + padding), y: offsetTop + 90, status: 1},  // Diagonal line of "4"
+                                       {x: offsetLeft + 7.9 * (brickWidth + padding), y: offsetTop + 60, status: 1},  // Diagonal line of "4"
+                                        {x: offsetLeft + 8.3 * (brickWidth + padding), y: offsetTop + 30, status: 1},  // Diagonal line of "4"
+                                          {x: offsetLeft + 8.9 * (brickWidth + padding), y: offsetTop + 0, status: 1},  // Diagonal line of "4"
+                                          {x: offsetLeft + 9.7 * (brickWidth + padding), y: offsetTop - 30, status: 1},  // Diagonal line of "4"
 
-    const rowCount = brickPattern.length;
-    const colCount = brickPattern[0].length;
+];
 
     let paddleWidth = 100, paddleHeight = 10, paddleX = (canvas.width - paddleWidth) / 2;
     let ballRadius = 10, x = canvas.width / 2, y = canvas.height - 30, dx = 2, dy = -2;
-    let isPaused = false;
     let gameOver = false;
     let victory = false;
+    let countdownValue = 3;
+    let gameStarted = false;
 
     const paddle = { rightPressed: false, leftPressed: false };
 
@@ -71,31 +109,6 @@
       if (e.key === "ArrowRight") paddle.rightPressed = false;
       else if (e.key === "ArrowLeft") paddle.leftPressed = false;
     });
-
-    // Initialize bricks based on pattern
-    const bricks = [];
-    for (let r = 0; r < rowCount; r++) {
-      bricks[r] = [];
-      for (let c = 0; c < colCount; c++) {
-        if (brickPattern[r][c] === "1") {
-          let brick = { 
-            x: c * (brickWidth + padding) + offsetLeft, 
-            y: r * (brickHeight + padding) + offsetTop, 
-            status: 1 
-          };
-
-          // For the "4", create a slanted effect by offsetting bricks
-          if (r === 1 && c === 1) brick.x += 20; // 1st brick of "4" diagonal
-          if (r === 1 && c === 2) brick.x += 40; // 2nd brick of "4" diagonal
-          if (r === 1 && c === 3) brick.x += 60; // 3rd brick of "4" diagonal
-          if (r === 1 && c === 4) brick.x += 80; // 4th brick of "4" diagonal
-
-          bricks[r][c] = brick;
-        } else {
-          bricks[r][c] = { status: 0 }; // Empty space
-        }
-      }
-    }
 
     // Draw paddle
     function drawPaddle() {
@@ -112,33 +125,41 @@
       ctx.closePath();
     }
 
-    // Draw bricks
+    // Draw bricks based on defined positions
     function drawBricks() {
-      for (let r = 0; r < bricks.length; r++) {
-        for (let c = 0; c < bricks[r].length; c++) {
-          if (bricks[r][c].status === 1) {
-            const brick = bricks[r][c];
-            ctx.beginPath();
-            ctx.rect(brick.x, brick.y, brickWidth, brickHeight);
-            ctx.fillStyle = "white";
-            ctx.fill();
-            ctx.closePath();
-          }
+      bricks.forEach(brick => {
+        if (brick.status === 1) {
+          ctx.beginPath();
+          ctx.rect(brick.x, brick.y, brickWidth, brickHeight);
+          ctx.fillStyle = "white";
+          ctx.fill();
+          ctx.closePath();
         }
-      }
+      });
     }
 
+    function animateBricks() {
+      bricks.forEach((brick) => {
+        if (brick.y < brick.targetY) {
+          brick.y += 5; // Adjust the speed of falling
+        }
+      });
+    }
+
+       // Check if all bricks are in position
+       function allBricksInPlace() {
+      return bricks.every((brick) => brick.y >= brick.targetY);
+    }
+
+    
     // Check for collisions
     function collisionDetection() {
-      for (let r = 0; r < rowCount; r++) {
-        for (let c = 0; c < colCount; c++) {
-          const brick = bricks[r][c];
-          if (brick.status && x > brick.x && x < brick.x + brickWidth && y > brick.y && y < brick.y + brickHeight) {
-            dy = -dy;
-            brick.status = 0; // Brick hit
-          }
+      bricks.forEach((brick, index) => {
+        if (brick.status === 1 && x > brick.x && x < brick.x + brickWidth && y > brick.y && y < brick.y + brickHeight) {
+          dy = -dy;
+          brick.status = 0; // Brick hit
         }
-      }
+      });
     }
 
     // Draw game over or victory message
@@ -148,17 +169,25 @@
       ctx.fillText(message, canvas.width / 2 - ctx.measureText(message).width / 2, canvas.height / 2);
     }
 
-    // Pause button functionality
-    document.getElementById('pauseButton').addEventListener('click', () => {
-      isPaused = !isPaused;
-      document.getElementById('pauseButton').textContent = isPaused ? "Resume" : "Pause";
-    });
+    // Initialize random speed and direction for the ball's motion
+function randomizeBallMotion() {
+  // Random speed between 2 and 4 for both directions
+  const speed = Math.random() * 2 + 2;
+  
+  // Randomize the direction between -1 and 1 for both x and y axis
+  dx = (Math.random() > 0.5 ? 1 : -1) * speed;
+  dy = (Math.random() > 0.5 ? 1 : -1) * speed;
+}
+
+randomizeBallMotion();
 
     // Game loop
     function draw() {
-      if (isPaused || gameOver || victory) return; // Pause or game over
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (gameOver || victory) return; 
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);       
+      
       drawBricks();
       drawBall();
       drawPaddle();
@@ -178,12 +207,10 @@
 
       // Victory condition
       let allBricksCleared = true;
-      for (let r = 0; r < bricks.length; r++) {
-        for (let c = 0; c < bricks[r].length; c++) {
-          if (bricks[r][c].status === 1) {
-            allBricksCleared = false;
-            break;
-          }
+      for (let i = 0; i < bricks.length; i++) {
+        if (bricks[i].status === 1) {
+          allBricksCleared = false;
+          break;
         }
       }
       if (allBricksCleared) {
@@ -204,6 +231,7 @@
     }
 
     draw();
+    
   </script>
 </body>
 </html>
