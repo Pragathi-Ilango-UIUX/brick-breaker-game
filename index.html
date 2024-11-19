@@ -231,6 +231,11 @@ randomizeBallMotion();
     }
 
     draw();
+
+    if (gameOver) {
+  // Notify Wix page that the game is over
+      window.parent.postMessage({ event: "gameOver" }, "*");
+    }
     
   </script>
 </body>
